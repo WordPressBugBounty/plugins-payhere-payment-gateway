@@ -43,7 +43,7 @@ function payhere_chage_call(orderId) {
 						function () {
 							window.location = payhere_config.payhere_args.return_url;
 						},
-						1500
+						3500
 					);
 				} else {
 					jQuery( ".payhere-overlay" ).find( 'h3' ).html( data.message ).css( {color: '#d00404'} );

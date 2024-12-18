@@ -115,8 +115,8 @@ class PayHereToken {
 		// phpcs:ignore
 		$bs64 = base64_encode( $this->app_id . ':' . $this->app_secret );
 		return array(
-			'Authorization: Basic ' . $bs64,
-			'Content-Type: application/x-www-form-urlencoded',
+			'Authorization' => 'Basic ' . $bs64,
+			'Content-Type' => 'application/x-www-form-urlencoded',
 		);
 	}
 
@@ -127,19 +127,22 @@ class PayHereToken {
 	 * @return string JSON encoded PayHere response
 	 */
 	public function get_authorization_token() {
+
 		$url = $this->get_payhere_access_token_url();
 
 		$headers = $this->get_auth_header_token();
 
-		$fields = array( 'grant_type' => 'client_credentials' );
+		$fields = array('grant_type' => 'client_credentials' );
 
 		$args = array(
+			'method' 	  => 'POST',
 			'body'        => $fields,
 			'timeout'     => '7',
 			'redirection' => '1',
 			'httpversion' => '1.0',
 			'blocking'    => true,
 			'headers'     => $headers,
+			'sslverify'   => true,
 			'cookies'     => array(),
 		);
 

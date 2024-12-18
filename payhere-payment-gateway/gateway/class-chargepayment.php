@@ -60,6 +60,7 @@ class ChargePayment extends PayHereToken {
 			),
 			'cookies'     => array(),
 			'data_format' => 'body',
+			'sslverify' => true,
 		);
 
 		$this->gateway_util->payhere_log( 'chargin_ARGS', $args );
@@ -70,7 +71,7 @@ class ChargePayment extends PayHereToken {
 			return false;
 		}
 
-		return $res['body'];
+		return $res;
 	}
 
 
@@ -87,7 +88,7 @@ class ChargePayment extends PayHereToken {
 		$json = array();
 
 		$_auth_token_data = $this->get_authorization_token();
-		$auth_token_data  = json_decode( $_auth_token_data );
+		$auth_token_data  = json_decode( $_auth_token_data['body'] );
 		$this->gateway_util->payhere_log( 'authorization_token', $_auth_token_data );
 
 		if ( isset( $auth_token_data->access_token ) && ! empty( $auth_token_data->access_token ) ) {
@@ -99,17 +100,21 @@ class ChargePayment extends PayHereToken {
 				$order->get_total()
 			);
 
-			$this->gateway_util->payhere_log( 'charge_response', $_charge_response );
-			$charge_response = json_decode( $_charge_response );
-			if ( '1' === $charge_response->status ) {
+			$this->gateway_util->payhere_log( 'charge_response', json_encode($_charge_response) );
+			$charge_response = json_decode( $_charge_response['body'] );
+			
+			if ( '1' === strval($charge_response->status) ) {
 
-				if ( '2' === $charge_response->data->status_code ) {
+				if ( '2' === strval($charge_response->data->status_code) ) {
+					
+					$order->add_meta_data('payhere_gateway_message', sanitize_text_field($charge_response->msg), true);
 					$order->payment_complete();
 					$order->add_order_note( $charge_response->msg );
 					$order->add_order_note( 'PayHere payment successful.<br/>PayHere Payment ID: ' . $charge_response->data->payment_id );
 
 					$json['type']    = 'OK';
 					$json['message'] = 'Payment Charged Successfully.';
+					
 				} else {
 					$json['type']    = 'ERR';
 					$json['message'] = 'Payment Un-Successful. Code : ' . $charge_response->data->status_code;

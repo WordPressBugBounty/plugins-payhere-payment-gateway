@@ -7,7 +7,7 @@
  * Plugin Name:       PayHere Payment Gateway
  * Plugin URI:        https://www.payhere.lk
  * Description:       PayHere Payment Gateway allows you to accept payment on your Woocommerce store via Visa, MasterCard, AMEX, eZcash, mCash & Internet banking services.
- * Version:           2.3.6
+ * Version:           2.3.8
  * Author:            PayHere (Private) Limited
  * Author URI:        https://www.payhere.lk
  * Text Domain:       payhere
@@ -25,7 +25,7 @@ if (!defined('WPINC')) {
  * Currently plugin version.
  * Start at version 2.0.0 and use SemVer - https://semver.org
  */
-define('PAYHERE_VERSION', '2.3.6');
+define('PAYHERE_VERSION', '2.3.8');
 /**
  * Currently plugin text domain.
  * Start at version 2.0.0 and use SemVer - https://semver.org

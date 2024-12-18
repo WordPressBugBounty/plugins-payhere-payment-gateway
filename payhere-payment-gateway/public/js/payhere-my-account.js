@@ -9,7 +9,7 @@
  */
 
 (function ($) {
-
+	console.log('button triggered');
 	$( "#payhere-method-remove-btn" ).click(
 		function () {
 			let ok = confirm( "Are you want to delete saved payment method?" );

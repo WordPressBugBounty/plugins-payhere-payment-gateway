@@ -131,7 +131,7 @@ class PayHere_Public {
 			$_card_info = get_user_meta( get_current_user_id(), 'payhere_customer_data', true );
 			$card_info  = json_decode( $_card_info );
 
-			wp_enqueue_script( 'payhere-my-account', plugin_dir_url( __FILE__ ) . '/js/payhere-my-account.js', array( 'jquery' ), '2.0.0', false );
+			wp_enqueue_script( 'payhere-my-account', plugin_dir_url( __FILE__ ) . '/js/payhere-my-account.js', array( 'jquery' ), '2.0.0', true );
 			wp_localize_script(
 				'payhere-my-account',
 				'payhere_data',

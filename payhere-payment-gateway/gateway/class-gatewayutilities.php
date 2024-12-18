@@ -291,7 +291,7 @@ class GatewayUtilities
 	{
 		$verified = true;
 
-		$order_id         = sanitize_text_field(filter_input(INPUT_POST, 'payhere_amount'));
+		$order_id         = sanitize_text_field(filter_input(INPUT_POST, 'order_id')); //changed from [payhere_amount] to [order_id] from version 2.3.7
 		$merchant_id      = sanitize_text_field(filter_input(INPUT_POST, 'merchant_id'));
 		$payhere_amount   = sanitize_text_field(filter_input(INPUT_POST, 'payhere_amount'));
 		$md5sig           = sanitize_text_field(filter_input(INPUT_POST, 'md5sig'));

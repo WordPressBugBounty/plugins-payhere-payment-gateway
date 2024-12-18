@@ -251,7 +251,7 @@ class PayHere
 
 		$this->loader->add_action('wp_ajax_payhere_charge', $plugin_admin, 'add_charge_ajax');
 		$this->loader->add_action('wp_ajax_payhere_capture', $plugin_admin, 'add_capture_ajax');
-		$this->loader->add_action('add_meta_boxes', $plugin_admin, 'add_order_metabox_to_order', 99);
+		$this->loader->add_action('add_meta_boxes', $plugin_admin, 'add_order_metabox_to_order', 99, 2);
 
 		$this->loader->add_filter('wcs_view_subscription_actions', $subscription, 'restrict_user_actions', 10, 2);
 		$this->loader->add_filter('user_has_cap', $subscription, 'payhere_user_has_capability', 10, 3);

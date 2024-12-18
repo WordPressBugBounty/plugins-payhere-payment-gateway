@@ -82,11 +82,11 @@ class PayHereOrderUtilities {
 	 * @param Array $post Global Post or associate array of data.
 	 */
 	public function authorize_order( $post ) {
-		if ( 'pending' === $this->order->get_status() ) {
+		if ( 'pending' === $this->order->get_status() || 'failed' === $this->order->get_status() ) {
 
 			$currency            = sanitize_text_field( $post['payhere_currency'] );
 			$payhere_amount      = sanitize_text_field( $post['payhere_amount'] );
-			$authorization_token = sanitize_text_field( $post['payhere_amount'] );
+			$authorization_token = sanitize_text_field( $post['authorization_token'] );
 			$status_message      = sanitize_text_field( $post['status_message'] );
 
 			$this->order->add_order_note( 'Order amount : ' . $currency . ' ' . $payhere_amount . '  Authorized By PayHere' );
@@ -111,11 +111,24 @@ class PayHereOrderUtilities {
 			$this->order->add_order_note( 'PayHere Payment ID: ' . sanitize_text_field( $post['payment_id'] ) );
 		} else {
 			$payment_id      = sanitize_text_field( $post['payment_id'] );
-			$subscription_id = sanitize_text_field( $post['subscription_id'] );
 			$this->order->payment_complete();
 			$this->order->add_order_note( 'PayHere payment successful.<br/>PayHere Payment ID: ' . $payment_id );
 
+			if ($post['captured_amount'] != $post['payhere_amount']){
+				
+				$discount_amount = $post['payhere_amount'] - $post['captured_amount'];
+        
+				$item = new WC_Order_Item_Fee();
+				$item->set_name(__('PayHere Payment Gateway Discount', 'payhere'));
+				$item->set_amount(-$discount_amount); 
+				$item->set_total(-$discount_amount); 
+				$this->order->add_item($item);
+				$this->order->set_total($this->order->get_total() - $discount_amount);
+				$this->order->save();
+			}
+
 			if ( $this->is_subscription ) {
+				$subscription_id = sanitize_text_field( $post['subscription_id'] ); //moved to is_subscription block from version 2.3.7
 				$this->order->add_order_note( 'PayHere Subscription ID: ' . $subscription_id );
 				$this->order->update_meta_data( '_payhere_subscription_id', $subscription_id );
 				$this->order->save();

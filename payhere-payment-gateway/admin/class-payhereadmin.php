@@ -228,18 +228,19 @@ class PayHereAdmin {
 	/**
 	 * Add Capture button to Woocommerce single order view
 	 */
-	public function add_order_metabox_to_order() {
-		global $post;
-		if ( $post && 'shop_order' === $post->post_type ) {
-			$order = wc_get_order( $post->ID );
+	public function add_order_metabox_to_order(string $post_type, $post) {
+
+		if ( $post && ('shop_order' === $post_type || 'woocommerce_page_wc-orders' === $post_type )) {
+			$order = wc_get_order( get_the_ID($post) );
 			if ( $order && 'payhere' === $order->get_payment_method() ) {
 				add_meta_box(
 					'payhere',
 					'<span style="display: flex"><img style="margin-right: 5px" src="https://www.payhere.lk/images/favicon.png" height="20" />  <span>PayHere Payments</span></span> ',
 					array( $this, 'payhere_order_auth_capture_content' ),
-					'shop_order',
+					$post_type,
 					'normal',
-					'high'
+					'high',
+					[$order]
 				);
 			}
 		}
@@ -248,7 +249,7 @@ class PayHereAdmin {
 	/**
 	 * Include capture modal content
 	 */
-	public function payhere_order_auth_capture_content() {
+	public function payhere_order_auth_capture_content($wc_auth_order) {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/order-auth-payment.php';
 	}
 

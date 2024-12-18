@@ -3,9 +3,9 @@ Contributors: payhere
 Donate link: https://www.payhere.lk
 Tags: payhere, online, payments, sri lanka
 Requires at least: 6.4
-Tested up to: 6.5.5
-WC tested up to: 9.0.0
-Stable tag: 2.3.6
+Tested up to: 6.7.1
+WC tested up to: 9.5.1
+Stable tag: 2.3.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -165,6 +165,12 @@ Fixed the issue with the text message when redirecting to the order-received pag
 
 = 2.3.6 =
 Fixed the issue of the pay button duplication.
+
+= 2.3.7 =
+Fixed issues with authorized and tokenized payments, and the issue with shipping details not being passed to PayHere in partial payments has also been fixed.
+
+= 2.3.8 =
+Support for PayHere gateway discounts has been enabled to display in WooCommerce Orders.
 
 == Upgrade Notice ==
 

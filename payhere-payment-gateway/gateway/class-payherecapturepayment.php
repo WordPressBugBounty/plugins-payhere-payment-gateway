@@ -32,7 +32,6 @@ class PayHereCapturePayment extends PayHereToken {
 		$_authorize_token = sanitize_text_field( $authorize_token );
 		$_order_id        = sanitize_text_field( $order_id );
 		$_amount          = sanitize_text_field( $amount );
-
 		$this->gateway_util->payhere_log( 'CAPTURE', array( $_token, $_authorize_token, $_order_id, $_amount ) );
 		$url = $this->get_payhere_capture_api_url();
 
@@ -83,22 +82,19 @@ class PayHereCapturePayment extends PayHereToken {
 		$json    = array();
 		$_token  = sanitize_text_field( $token );
 		$_amount = sanitize_text_field( $amount );
-
 		$_auth_token_data = $this->get_authorization_token();
 		$this->gateway_util->payhere_log( 'authorization_token', $_auth_token_data );
-		$auth_token_data = json_decode( $_auth_token_data );
+		$auth_token_data = json_decode( $_auth_token_data['body'] );
 
 		if ( isset( $auth_token_data->access_token ) && ! empty( $auth_token_data->access_token ) ) {
 
 			$this->gateway_util->payhere_log( 'INFO', 'Trying to capture' );
 			$_capture_response = $this->submit_capture_payment( $auth_token_data->access_token, $_token, $order->get_id(), $_amount );
 			$this->gateway_util->payhere_log( 'capture_response', $_capture_response );
-
 			$capture_response = json_decode( $_capture_response );
 
-			if ( '1' === $capture_response->status ) {
-
-				if ( '2' === $capture_response->data->status_code ) {
+			if ( '1' === strval($capture_response->status )) {
+				if ( '2' === strval($capture_response->data->status_code )) {
 					$order->set_status( 'processing' );
 					$order->payment_complete( sanitize_text_field( $capture_response->data->payment_id ) );
 					$order->add_meta_data( 'payhere_acpture_date', gmdate( "g:ia \o\n l jS F Y" ) );
