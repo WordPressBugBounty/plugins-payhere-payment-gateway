@@ -5,7 +5,7 @@ Tags: payhere, online, payments, sri lanka
 Requires at least: 6.4
 Tested up to: 6.7.1
 WC tested up to: 9.5.1
-Stable tag: 2.3.8
+Stable tag: 2.3.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -171,6 +171,9 @@ Fixed issues with authorized and tokenized payments, and the issue with shipping
 
 = 2.3.8 =
 Support for PayHere gateway discounts has been enabled to display in WooCommerce Orders.
+
+= 2.3.9 =
+Bug fixes & improvements.
 
 == Upgrade Notice ==
 

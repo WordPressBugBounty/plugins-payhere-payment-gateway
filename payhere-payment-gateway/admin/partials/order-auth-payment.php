@@ -11,8 +11,8 @@
  * @subpackage PayHere/admin
  */
 
-$_order_id                = $wc_auth_order->get_id();
-$_order                   = wc_get_order($_order_id);
+global $post;
+$_order = wc_get_order( get_the_ID($post) );
 $payhere_authorize_token  = $_order->get_meta('payhere_auth_token', true) ? $_order->get_meta('payhere_auth_token', true) : '';
 $payhere_authorize_amount = $_order->get_meta('payhere_auth_amount', true) ? $_order->get_meta('payhere_auth_amount', true) : '';
 $payhere_acpture_amount   = $_order->get_meta('payhere_acpture_amount', true) ? $_order->get_meta('payhere_auth_amount', true) : '';

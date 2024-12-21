@@ -249,7 +249,7 @@ class PayHereAdmin {
 	/**
 	 * Include capture modal content
 	 */
-	public function payhere_order_auth_capture_content($wc_auth_order) {
+	public function payhere_order_auth_capture_content() {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/order-auth-payment.php';
 	}
 
