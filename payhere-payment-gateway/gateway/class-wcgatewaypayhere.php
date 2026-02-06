@@ -17,6 +17,11 @@
  * @subpackage PayHere/gateway
  * @author     Dilshan Jayasanka <dilshan@payhere.lk>
  */
+
+if (!defined('ABSPATH')) {
+	exit;
+}
+
 class WCGatewayPayHere extends WC_Payment_Gateway
 {
 
@@ -283,14 +288,14 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 		if ($this->onsite_checkout_enabled) {
 			printf(
 				'<p><strong>%s</strong></br>%s</p>',
-				esc_html(__('Thank you for your order.', 'woo_payhere')),
-				esc_html(__('Click the below button to checkout with PayHere.', 'woo_payhere'))
+				esc_html(__('Thank you for your order.', 'payhere-payment-gateway')),
+				esc_html(__('Click the below button to checkout with PayHere.', 'payhere-payment-gateway'))
 			);
 		} else {
 			printf(
 				'<p><strong>%s</strong><br/>%s</p>',
-				esc_html(__('Thank you for your order.', 'woo_payhere')),
-				esc_html(__('The payment page will open soon.', 'woo_payhere'))
+				esc_html(__('Thank you for your order.', 'payhere-payment-gateway')),
+				esc_html(__('The payment page will open soon.', 'payhere-payment-gateway'))
 			);
 		}
 		$this->generate_payhere_form_escaped($order_id);
@@ -380,16 +385,22 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 		);
 
 		if (self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR === $subscription_process_status) {
+
 			$target_err_text = self::SUB_PROCESS_ERR_UNKNOWN;
-			if (!empty($subscription_err)) {
+
+			if (! empty($subscription_err)) {
 				$target_err_text = $subscription_err;
 			}
 
-			return sprintf(
-				'<ul class="woocommerce-error" role="alert"><li><b>Cannot Process Payment</b><br>%s</li></ul>',
-				$target_err_text
+			echo sprintf(
+				'<ul class="woocommerce-error" role="alert"><li><b>%s</b><br>%s</li></ul>',
+				esc_html__('Cannot Process Payment', 'payhere-payment-gateway'),
+				esc_html($target_err_text)
 			);
+
+			return;
 		}
+
 		// End  Process as recurring payment.
 
 		$payment_obj = array();
@@ -479,121 +490,203 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 	 */
 	private function process_as_subscription_if_needed(&$payhere_args, &$process_status, &$subscription_err, $order, $effective_merchant_secret)
 	{
-		if (!class_exists('WC_Subscriptions')) {
+		$is_yith_enabled = class_exists('YITH_WC_Subscription');
+		$is_yith_subscription = false;
+
+		if (!(class_exists('WC_Subscriptions') || class_exists('YITH_WC_Subscription'))) {
 			$process_status = self::SUB_PROCESS_STATUS_NOT_SUBSCRIPTION;
 			return;
 		}
 
-		$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
-		if (!wcs_order_contains_subscription($order)) {
-			$process_status = self::SUB_PROCESS_STATUS_NOT_SUBSCRIPTION;
-			return;
-		}
+		if ($is_yith_enabled) {
 
-		$subscriptions     = wcs_get_subscriptions_for_order($order);
-		$supported_periods = array('day', 'week', 'year', 'month');
+			$is_yith_subscription = ywsbs_is_an_order_with_subscription($order);
 
-		if (count($subscriptions) > 1) {
-			$process_status = self::SUB_PROCESS_ERR_MULT_SUBS;
-			return;
-		}
+			if ($is_yith_subscription) {
 
-		// We only support one subscription per order.
-		$subscription = $subscriptions[array_keys($subscriptions)[0]];
+				$subscriptions = $order->get_meta('subscriptions');
 
-		$sub_price_per_period = $subscription->get_total();
-		$sub_sign_up_fee      = $subscription->get_sign_up_fee();
-		$sub_billing_period   = $subscription->get_billing_period();
-		$sub_billing_interval = $subscription->get_billing_interval();
-		$sub_trial_period     = $subscription->get_trial_period();
-		$sub_billing_length   = '';
-		$sub_trial_length     = '';
+				$items = $order->get_items();
 
-		// Determine billing length.
-		$start_timestamp        = $subscription->get_time('date_created');
-		$trial_end_timestamp    = $subscription->get_time('trial_end');
-		$next_payment_timestamp = $subscription->get_time('next_payment');
-		$is_synced_subscription = WC_Subscriptions_Synchroniser::subscription_contains_synced_product($subscription->get_id());
+				if (1 < count($items)) {
+					$subscription_err = self::SUB_PROCESS_ERR_MIXED_PRODUCTS;
+					$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+					return;
+				}
 
-		if ($is_synced_subscription) {
-			$length_from_timestamp = $next_payment_timestamp;
-		} elseif ($trial_end_timestamp > 0) {
-			$length_from_timestamp = $trial_end_timestamp;
+				if (!empty($subscriptions) && is_array($subscriptions) && isset($subscriptions[0])) {
+					$sub_data = ywsbs_get_subscription($subscriptions[0]);
+				} else {
+					$subscription_err = self::SUB_PROCESS_ERR_MIXED_PRODUCTS;
+					$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+					return;
+				}
+
+				$yw_sub_reccurance = $sub_data->price_time_option;
+				$yw_sub_duration = $sub_data->max_length;
+				$yw_sub_interval_val = $sub_data->price_is_per;
+
+				switch ($yw_sub_reccurance) {
+					case 'days':
+						$yw_sub_reccurance = 'Day';
+						break;
+					case 'weeks':
+						$yw_sub_reccurance = 'Week';
+						break;
+					case 'months':
+						$yw_sub_reccurance = 'Month';
+						break;
+					case 'years':
+						$yw_sub_reccurance = 'Year';
+						break;
+					default:
+						$subscription_err = self::SUB_PROCESS_ERR_INV_PERIOD;
+						return;
+				}
+
+				if (null == $yw_sub_duration) {
+					$yw_sub_duration = 'Forever';
+				} else {
+					$yw_sub_duration = $yw_sub_duration . ' ' . ucfirst($yw_sub_reccurance);
+				}
+
+				$recurrence = $yw_sub_interval_val . ' ' . ucfirst($yw_sub_reccurance);
+
+				$duration   = $yw_sub_duration;
+
+				$amount = $sub_data->order_total;
+
+				//$payhere_args['startup_fee'] = $startup_fee;
+				$payhere_args['recurrence']  = $recurrence;
+				$payhere_args['duration']    = $duration;
+				$payhere_args['amount']      = str_replace(',', '', $amount);
+
+
+
+				$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_OK;
+			}
+		} else if (class_exists('WC_Subscriptions')) {
+
+			if (!wcs_order_contains_subscription($order)) {
+				$process_status = self::SUB_PROCESS_STATUS_NOT_SUBSCRIPTION;
+				return;
+			}
+
+			$subscriptions     = wcs_get_subscriptions_for_order($order);
+
+			$supported_periods = array('day', 'week', 'year', 'month');
+
+			if (count($subscriptions) > 1) {
+				$process_status = self::SUB_PROCESS_ERR_MULT_SUBS;
+				return;
+			}
+
+			// We only support one subscription per order.
+			$subscription = $subscriptions[array_keys($subscriptions)[0]];
+
+			$sub_price_per_period = $subscription->get_total();
+			$sub_sign_up_fee      = $subscription->get_sign_up_fee();
+			$sub_billing_period   = $subscription->get_billing_period();
+			$sub_billing_interval = $subscription->get_billing_interval();
+			$sub_trial_period     = $subscription->get_trial_period();
+			$sub_billing_length   = '';
+			$sub_trial_length     = '';
+
+
+			// Determine billing length.
+			$start_timestamp        = $subscription->get_time('date_created');
+			$trial_end_timestamp    = $subscription->get_time('trial_end');
+			$next_payment_timestamp = $subscription->get_time('next_payment');
+			$is_synced_subscription = WC_Subscriptions_Synchroniser::subscription_contains_synced_product($subscription->get_id());
+
+			if ($is_synced_subscription) {
+				$length_from_timestamp = $next_payment_timestamp;
+			} elseif ($trial_end_timestamp > 0) {
+				$length_from_timestamp = $trial_end_timestamp;
+			} else {
+				$length_from_timestamp = $start_timestamp;
+			}
+
+			$sub_billing_length = wcs_estimate_periods_between($length_from_timestamp, $subscription->get_time('end'), $sub_billing_period);
+			$sub_trial_length   = wcs_estimate_periods_between($start_timestamp, $length_from_timestamp, $sub_trial_period);
+
+			// Guard Errors.
+			$order_product_types = array();
+			foreach ($order->get_items() as $item) {
+				$product_type                         = WC_Product_Factory::get_product_type($item['product_id']);
+				$order_product_types[$product_type] = true;
+			}
+			$order_product_types = array_keys($order_product_types);
+			if (count($order_product_types) > 1 && array_search('subscription', $order_product_types, true) !== false) {
+				$subscription_err = self::SUB_PROCESS_ERR_MIXED_PRODUCTS;
+				$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+				return;
+			}
+
+			if ($sub_trial_length > 0 && $sub_billing_period !== $sub_trial_period) {
+				$subscription_err = self::SUB_PROCESS_ERR_INC_PERIOD;
+				$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+				return;
+			}
+
+			if ($sub_trial_length > 0 && 1 !== $sub_trial_length) {
+				$subscription_err = self::SUB_PROCESS_ERR_TRIAL_LONG;
+				$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+				return;
+			}
+
+			if ($is_synced_subscription) {
+				$subscription_err = self::SUB_PROCESS_ERR_SYNCED;
+				$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+				return;
+			}
+
+			if (array_search(strtolower($sub_billing_period), $supported_periods, true) === false) {
+				$subscription_err = self::SUB_PROCESS_ERR_INV_PERIOD;
+				$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+				return;
+			}
+
+			if ($sub_trial_length > 0 && 0 === $sub_sign_up_fee) {
+				$subscription_err = self::SUB_PROCESS_ERR_FREE_TRIAL;
+				$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_ERROR;
+				return;
+			}
+
+			// Modify PayHere Args.
+
+			$startup_fee = $sub_sign_up_fee;
+
+			$recurrence = $sub_billing_interval . ' ' . ucfirst($sub_billing_period);
+			$duration   = $sub_billing_length . ' ' . ucfirst($sub_billing_period);
+
+			// Handle Forever Billing Periods.
+
+			if (0 === $sub_billing_length) {
+				$duration = 'Forever';
+			}
+
+			$amount = $sub_price_per_period;
+			$payhere_args['startup_fee'] = $startup_fee;
+			$payhere_args['recurrence']  = $recurrence;
+			$payhere_args['duration']    = $duration;
+			$payhere_args['amount']      = str_replace(',', '', $amount);
+
+			if (isset($payhere_args['hash'])) {
+				$payhere_args['hash'] = $this->gateway_utilities->generate_frontend_hash(
+					$payhere_args['merchant_id'],
+					$effective_merchant_secret,
+					$order->get_id(),
+					number_format(doubleval($payhere_args['amount']) + doubleval($startup_fee), 2, '.', ''),
+					$payhere_args['currency']
+				);
+			}
+
+			$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_OK;
 		} else {
-			$length_from_timestamp = $start_timestamp;
-		}
-
-		$sub_billing_length = wcs_estimate_periods_between($length_from_timestamp, $subscription->get_time('end'), $sub_billing_period);
-		$sub_trial_length   = wcs_estimate_periods_between($start_timestamp, $length_from_timestamp, $sub_trial_period);
-
-		// Guard Errors.
-		$order_product_types = array();
-		foreach ($order->get_items() as $item) {
-			$product_type                         = WC_Product_Factory::get_product_type($item['product_id']);
-			$order_product_types[$product_type] = true;
-		}
-		$order_product_types = array_keys($order_product_types);
-		if (count($order_product_types) > 1 && array_search('subscription', $order_product_types, true) !== false) {
-			$subscription_err = self::SUB_PROCESS_ERR_MIXED_PRODUCTS;
+			$process_status = self::SUB_PROCESS_STATUS_NOT_SUBSCRIPTION;
 			return;
 		}
-
-		if ($sub_trial_length > 0 && $sub_billing_period !== $sub_trial_period) {
-			$subscription_err = self::SUB_PROCESS_ERR_INC_PERIOD;
-			return;
-		}
-
-		if ($sub_trial_length > 0 && 1 !== $sub_trial_length) {
-			$subscription_err = self::SUB_PROCESS_ERR_TRIAL_LONG;
-			return;
-		}
-
-		if ($is_synced_subscription) {
-			$subscription_err = self::SUB_PROCESS_ERR_SYNCED;
-			return;
-		}
-
-		if (array_search(strtolower($sub_billing_period), $supported_periods, true) === false) {
-			$subscription_err = self::SUB_PROCESS_ERR_INV_PERIOD;
-			return;
-		}
-
-		if ($sub_trial_length > 0 && 0 === $sub_sign_up_fee) {
-			$subscription_err = self::SUB_PROCESS_ERR_FREE_TRIAL;
-			return;
-		}
-
-		// Modify PayHere Args.
-
-		$startup_fee = $sub_sign_up_fee;
-
-		$recurrence = $sub_billing_interval . ' ' . ucfirst($sub_billing_period);
-		$duration   = $sub_billing_length . ' ' . ucfirst($sub_billing_period);
-
-		// Handle Forever Billing Periods.
-
-		if (0 === $sub_billing_length) {
-			$duration = 'Forever';
-		}
-
-		$amount = $sub_price_per_period;
-
-		$payhere_args['startup_fee'] = $startup_fee;
-		$payhere_args['recurrence']  = $recurrence;
-		$payhere_args['duration']    = $duration;
-		$payhere_args['amount']      = str_replace(',', '', $amount);
-
-		if (isset($payhere_args['hash'])) {
-			$payhere_args['hash'] = $this->gateway_utilities->generate_frontend_hash(
-				$payhere_args['merchant_id'],
-				$effective_merchant_secret,
-				$order->get_id(),
-				number_format(doubleval($payhere_args['amount']) + doubleval($startup_fee), 2, '.', ''),
-				$payhere_args['currency']
-			);
-		}
-
-		$process_status = self::SUB_PROCESS_STATUS_SUBSCRIPTION_OK;
 	}
 
 	/**
@@ -612,8 +705,8 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 			// phpcs:ignore
 			$key = empty($_GET['key']) ? '' : wc_clean($_GET['key']);
 
-			$order_id  = apply_filters('woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
-			$order_key = apply_filters('woocommerce_thankyou_order_key', $key);
+			$order_id  = apply_filters('payhere_woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
+			$order_key = apply_filters('payhere_woocommerce_thankyou_order_key', $key);
 
 			if ($order_id > 0) {
 				$order = wc_get_order($order_id);
@@ -657,7 +750,7 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 						printf(
 							'<a class="ph-btn blue" href="%s">%s</a>',
 							esc_url($order->get_checkout_payment_url()),
-							esc_html(__('Try Again', 'payhere'))
+							esc_html(__('Try Again', 'payhere-payment-gateway'))
 						);
 					}
 					?>
@@ -721,18 +814,21 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 			return false;
 		}
 
-		$is_subscription  = !empty(filter_input(INPUT_POST, 'subscription_id'));
-		$is_authorization = !empty(filter_input(INPUT_POST, 'authorization_token'));
+		$is_subscription  = !empty(sanitize_text_field(filter_input(INPUT_POST, 'subscription_id', FILTER_SANITIZE_SPECIAL_CHARS)));
+		$is_authorization = !empty(sanitize_text_field(filter_input(INPUT_POST, 'authorization_token', FILTER_SANITIZE_SPECIAL_CHARS)));
+		$is_tokenized 	  = !empty(sanitize_text_field(filter_input(INPUT_POST, 'customer_token', FILTER_SANITIZE_SPECIAL_CHARS)));
 
-		$post_data = filter_input_array(INPUT_POST, FILTER_DEFAULT);
-		$this->gateway_utilities->payhere_log('PAYHERE_RESPONSE', $post_data);
+		// $post_data = filter_input_array(INPUT_POST, FILTER_DEFAULT);
+		// $this->gateway_utilities->payhere_log('PAYHERE_RESPONSE', $post_data);
 
-		$_order_id        = filter_input(INPUT_POST, 'order_id');
-		$status_code      = filter_input(INPUT_POST, 'status_code');
-		$status_message   = filter_input(INPUT_POST, 'status_message');
-		$payment_id       = filter_input(INPUT_POST, 'payment_id');
-		$payhere_amount   = filter_input(INPUT_POST, 'payhere_amount');
-		$payhere_currency = filter_input(INPUT_POST, 'payhere_currency');
+		$_order_id        = sanitize_text_field(filter_input(INPUT_POST, 'order_id', FILTER_SANITIZE_SPECIAL_CHARS));
+		$status_code      = sanitize_text_field(filter_input(INPUT_POST, 'status_code', FILTER_SANITIZE_SPECIAL_CHARS));
+		$status_message   = sanitize_text_field(filter_input(INPUT_POST, 'status_message', FILTER_SANITIZE_SPECIAL_CHARS));
+		$payment_id       = sanitize_text_field(filter_input(INPUT_POST, 'payment_id', FILTER_SANITIZE_SPECIAL_CHARS));
+		$payhere_amount   = sanitize_text_field(filter_input(INPUT_POST, 'payhere_amount', FILTER_SANITIZE_SPECIAL_CHARS));
+		$payhere_currency = sanitize_text_field(filter_input(INPUT_POST, 'payhere_currency', FILTER_SANITIZE_SPECIAL_CHARS));
+
+
 
 		if (!isset($_order_id) || (!isset($payment_id) && !$is_authorization)) {
 			$this->gateway_utilities->payhere_log('PAYHERE_RESPONSE', 'Order id Not Found.');
@@ -755,7 +851,19 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 
 			if (('completed' !== $order->get_status() && !$is_subscription) || ($is_subscription)) {
 
-				if (!$verified && floatval($payhere_amount) === floatval($order_amount) && $payhere_currency === $order_currncy) {
+				$payhereAmount = number_format((float) $payhere_amount, 2, '.', '');
+				$orderAmount   = number_format((float) $order_amount, 2, '.', '');
+
+				$payhereCurrency = strtoupper(trim($payhere_currency));
+				$orderCurrency   = strtoupper(trim($order_currncy));
+
+				// Validate response integrity
+				$hasError =
+					!$verified ||
+					$payhereAmount !== $orderAmount ||
+					$payhereCurrency !== $orderCurrency;
+
+				if ($hasError) {
 					$this->msg['class']   = 'error';
 					$this->msg['message'] = 'Security Error. Illegal access detected.';
 					$order->add_order_note('Checksum ERROR: ' . wp_json_encode($post_data));
@@ -769,27 +877,50 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 				$order->add_meta_data('payhere_gateway_message', sanitize_text_field($status_message), true);
 
 				if ('2' === $status) {
-					if (isset($post_data['customer_token'])) {
-						$order_util->update_user_token($post_data);
+
+					if ($is_tokenized) {
+						$tokenized_data = [
+							'customer_token' 	=> sanitize_text_field(filter_input(INPUT_POST, 'customer_token', FILTER_SANITIZE_SPECIAL_CHARS)),
+							'card_holder_name'	=> sanitize_text_field(filter_input(INPUT_POST, 'card_holder_name', FILTER_SANITIZE_SPECIAL_CHARS)),
+							'card_no'			=> sanitize_text_field(filter_input(INPUT_POST, 'card_no', FILTER_SANITIZE_SPECIAL_CHARS)),
+							'card_expiry'		=> sanitize_text_field(filter_input(INPUT_POST, 'card_expiry', FILTER_SANITIZE_SPECIAL_CHARS)),
+							'method'			=> sanitize_text_field(filter_input(INPUT_POST, 'method', FILTER_SANITIZE_SPECIAL_CHARS))
+						];
+						$order_util->update_user_token($tokenized_data);
+					}
+
+					$post_data = [
+						'payment_id'		=> sanitize_text_field($payment_id),
+						'payhere_amount' 	=> sanitize_text_field(filter_input(INPUT_POST, 'payhere_amount', FILTER_SANITIZE_SPECIAL_CHARS)),
+						'captured_amount'	=> sanitize_text_field(filter_input(INPUT_POST, 'captured_amount', FILTER_SANITIZE_SPECIAL_CHARS))
+					];
+
+					if ($is_subscription) {
+						$post_data['subscription_id'] = sanitize_text_field(filter_input(INPUT_POST, 'subscription_id', FILTER_SANITIZE_SPECIAL_CHARS));
 					}
 
 					$this->msg['message'] = 'Thank you for shopping with us. Your account has been charged and your transaction is successful.';
 					$this->msg['class']   = 'woocommerce-message';
 					$order_util->update_order($post_data);
 					$this->gateway_utilities->payhere_log('PAYHERE_RESPONSE', 'Order Updated : Successfull');
-
 				} elseif ('3' === $status) {
 
 					//added this block from version 2.3.7 to manage authorized orders.
-					
+
+					$post_data = [
+						'payhere_currency'		=> sanitize_text_field(filter_input(INPUT_POST, 'payhere_currency', FILTER_SANITIZE_SPECIAL_CHARS)),
+						'payhere_amount'		=> sanitize_text_field($payhere_amount),
+						'authorization_token'	=> sanitize_text_field(filter_input(INPUT_POST, 'authorization_token', FILTER_SANITIZE_SPECIAL_CHARS)),
+						'status_message'		=> sanitize_text_field($status_message)
+					];
+
 					$order_util->authorize_order($post_data);
 					$this->gateway_utilities->payhere_log('PAYHERE_RESPONSE', 'Order Updated : Autorizarion : ' . $status);
-
 				} elseif ('0' === $status) {
 
 					$this->msg['message'] = 'Thank you for shopping with us. Right now your payment status is pending. We will keep you posted regarding the status of your order through eMail';
 					$this->msg['class']   = 'woocommerce-info';
-					$order->add_order_note('PayHere payment status is pending<br/>PayHere Payment ID: ' . sanitize_text_field($post_data['payment_id']));
+					$order->add_order_note('PayHere payment status is pending<br/>PayHere Payment ID: ' . sanitize_text_field($payment_id));
 					$order->update_status('on-hold');
 					$woocommerce->cart->empty_cart();
 
@@ -812,9 +943,9 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 				}
 
 				if ($is_subscription) {
-					$message_type       = filter_input(INPUT_POST, 'message_type');
-					$item_rec_status    = filter_input(INPUT_POST, 'item_rec_status');
-					$item_rec_date_next = filter_input(INPUT_POST, 'item_rec_date_next');
+					$message_type       = sanitize_text_field(filter_input(INPUT_POST, 'message_type', FILTER_SANITIZE_SPECIAL_CHARS));
+					$item_rec_status    = sanitize_text_field(filter_input(INPUT_POST, 'item_rec_status', FILTER_SANITIZE_SPECIAL_CHARS));
+					$item_rec_date_next = sanitize_text_field(filter_input(INPUT_POST, 'item_rec_date_next', FILTER_SANITIZE_SPECIAL_CHARS));
 
 					$order->add_order_note(
 						sprintf(
@@ -838,7 +969,7 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 	public function charge_payment()
 	{
 		$json     = array();
-		$order_id = filter_input(INPUT_POST, 'order_id');
+		$order_id = sanitize_text_field(filter_input(INPUT_POST, 'order_id', FILTER_SANITIZE_SPECIAL_CHARS));
 		if (!empty($order_id)) {
 			$order_id     = wc_sanitize_order_id($order_id);
 			$is_test_mode = $this->settings['test_mode'];
@@ -883,7 +1014,7 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 	public function capture_payment()
 	{
 		$json     = array();
-		$order_id = filter_input(INPUT_POST, 'order_id');
+		$order_id = sanitize_text_field(filter_input(INPUT_POST, 'order_id', FILTER_SANITIZE_SPECIAL_CHARS));
 		$order	  = wc_get_order($order_id);
 
 		if (!empty($order_id)) {
@@ -933,8 +1064,8 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 			// phpcs:ignore
 			$key = empty($_GET['key']) ? '' : wc_clean($_GET['key']);
 
-			$order_id  = apply_filters('woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
-			$order_key = apply_filters('woocommerce_thankyou_order_key', $key);
+			$order_id  = apply_filters('payhere_woocommerce_thankyou_order_id', absint($wp->query_vars['order-received']));
+			$order_key = apply_filters('payhere_woocommerce_thankyou_order_key', $key);
 
 
 			if ($order_id > 0) {
@@ -944,9 +1075,8 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 				}
 			}
 
-			if (isset($order) && $order->get_payment_method() === $this->id) {
-
-				if (($order->get_status() === 'pending')) {
+			if ($order instanceof WC_Order && $order->get_payment_method() === $this->id) {
+				if ($order->get_status() === 'pending') {
 					$title = 'Payment was not completed. Please try your purchase again.';
 				}
 			}

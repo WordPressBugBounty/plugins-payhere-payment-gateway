@@ -100,7 +100,7 @@ class ChargePayment extends PayHereToken {
 				$order->get_total()
 			);
 
-			$this->gateway_util->payhere_log( 'charge_response', json_encode($_charge_response) );
+			$this->gateway_util->payhere_log( 'charge_response', wp_json_encode($_charge_response) );
 			$charge_response = json_decode( $_charge_response['body'] );
 			
 			if ( '1' === strval($charge_response->status) ) {

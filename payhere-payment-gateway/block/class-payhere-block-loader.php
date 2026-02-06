@@ -10,11 +10,14 @@
  * @subpackage PayHere/gateway
  */
 
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 /**
  * Custom function to declare compatibility with cart_checkout_blocks feature 
  */
-function ph_declare_cart_checkout_blocks_compatibility()
+function payhere_declare_cart_checkout_blocks_compatibility()
 {
     // Check if the required class exists
     if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
@@ -23,13 +26,13 @@ function ph_declare_cart_checkout_blocks_compatibility()
     }
 }
 // Hook the custom function to the 'before_woocommerce_init' action
-add_action('before_woocommerce_init', 'ph_declare_cart_checkout_blocks_compatibility');
+add_action('before_woocommerce_init', 'payhere_declare_cart_checkout_blocks_compatibility');
 
 
 /**
  * Custom function to register a payment method type.
  */
-function ph_register_order_approval_payment_method_type()
+function payhere_register_order_approval_payment_method_type()
 {
     // Check if the required class exists
     if (!class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
@@ -49,4 +52,4 @@ function ph_register_order_approval_payment_method_type()
 }
 
 // Hook the custom function to the 'woocommerce_blocks_loaded' action
-add_action('woocommerce_blocks_loaded', 'ph_register_order_approval_payment_method_type');
+add_action('woocommerce_blocks_loaded', 'payhere_register_order_approval_payment_method_type');

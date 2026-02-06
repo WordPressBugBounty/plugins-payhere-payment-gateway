@@ -6,11 +6,16 @@
  *
  * @package    PayHere
  * @subpackage PayHere/public
+ * 
+ * This script enables the PayHere save card feature, sending transaction data to PayHere for processing.
+ * For more information on data handling, refer to:
+ * - Terms of Service: https://www.payhere.lk/legal
+ * - Privacy Policy: https://www.payhere.lk/privacy
  */
 
 var scr   = document.createElement( 'script' ),
 	head  = document.head || document.getElementsByTagName( 'head' )[0];
-scr.src   = 'https://www.payhere.lk/lib/payhere.js';
+scr.src   = 'https://www.payhere.lk/lib/payhere-2.0.js';
 scr.async = false;
 scr.id    = 'payhere_js';
 scr.defer = false;

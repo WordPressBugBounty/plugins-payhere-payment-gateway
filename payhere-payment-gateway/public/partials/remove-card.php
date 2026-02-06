@@ -12,6 +12,10 @@
  * @subpackage PayHere/public/partials
  */
 
+	if (!defined('ABSPATH')) {
+		exit;
+	}
+
 ?>
 <div class="payhere-card-container">
 	<h4>Saved Payment Methods.</h4>

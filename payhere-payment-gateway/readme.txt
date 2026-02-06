@@ -1,15 +1,15 @@
-PayHere Payment Gateway Plugin for WooCommerce
+PayHere Payment Gateway 
 Contributors: payhere
 Donate link: https://www.payhere.lk
 Tags: payhere, online, payments, sri lanka
 Requires at least: 6.4
-Tested up to: 6.7.1
-WC tested up to: 9.5.1
-Stable tag: 2.3.9
+Tested up to: 6.9
+WC tested up to: 10.4.3
+Stable tag: 2.4.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-PayHere Payment Gateway Plugin for WooCommerce
+PayHere Payment Gateway 
 
 
 == Description ==
@@ -174,6 +174,21 @@ Support for PayHere gateway discounts has been enabled to display in WooCommerce
 
 = 2.3.9 =
 Bug fixes & improvements.
+
+= 2.4.0 =
+Bug fixes, vulnerability fixes, and security enhancements.
+
+= 2.4.1 =
+Stable tag fix.
+
+= 2.4.2 =
+Bug and valiidation fixes.
+
+= 2.4.3 =
+Bug fixes.
+
+= 2.4.4 =
+Fixed an issue on the WooCommerce order page.
 
 == Upgrade Notice ==
 

@@ -7,11 +7,13 @@
  * Plugin Name:       PayHere Payment Gateway
  * Plugin URI:        https://www.payhere.lk
  * Description:       PayHere Payment Gateway allows you to accept payment on your Woocommerce store via Visa, MasterCard, AMEX, eZcash, mCash & Internet banking services.
- * Version:           2.3.9
+ * Version:           2.4.4
  * Author:            PayHere (Private) Limited
  * Author URI:        https://www.payhere.lk
- * Text Domain:       payhere
+ * Text Domain:       payhere-payment-gateway
  * Domain Path:       /languages
+ * License: 		  GPLv2 or later
+ * License URI: 	  https://www.gnu.org/licenses/gpl-2.0.html
  *
  * @package    PayHere
  */
@@ -25,18 +27,24 @@ if (!defined('WPINC')) {
  * Currently plugin version.
  * Start at version 2.0.0 and use SemVer - https://semver.org
  */
-define('PAYHERE_VERSION', '2.3.9');
+define('PAYHERE_VERSION', '2.4.4');
 /**
  * Currently plugin text domain.
  * Start at version 2.0.0 and use SemVer - https://semver.org
  */
-define('PAYHERE_TEXT_DOMAIN', 'payhere-ipg');
+define('PAYHERE_TEXT_DOMAIN', 'payhere-payment-gateway');
+
+/**
+ * Current plugin directory
+ * Start at version 2.4.0
+ */
+define( 'PAYHERE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-payhere-activator.php
  */
-function activate_payhere()
+function payhere_activate()
 {
 	require_once plugin_dir_path(__FILE__) . 'includes/class-payhere-activator.php';
 	PayHere_Activator::activate();
@@ -46,14 +54,14 @@ function activate_payhere()
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-payhere-deactivator.php
  */
-function deactivate_payhere()
+function payhere_deactivate()
 {
 	require_once plugin_dir_path(__FILE__) . 'includes/class-payhere-deactivator.php';
 	PayHere_Deactivator::deactivate();
 }
 
-register_activation_hook(__FILE__, 'activate_payhere');
-register_deactivation_hook(__FILE__, 'deactivate_payhere');
+register_activation_hook(__FILE__, 'payhere_activate');
+register_deactivation_hook(__FILE__, 'payhere_deactivate');
 
 /**
  * Add function to remove old transaction logs. 
@@ -72,7 +80,7 @@ function payhere_check_upgrade()
 				$files = glob($logs_dir . '/*'); 
 				foreach ($files as $file) {
 					if (is_file($file)) {
-						unlink($file);
+						wp_delete_file($file);
 					}
 				}
 			}
@@ -103,9 +111,9 @@ require plugin_dir_path(__FILE__) . 'block/class-payhere-block-loader.php';
  *
  * @since    2.0.0
  */
-function run_payhere()
+function payhere_run()
 {
 	$plugin = new PayHere();
 	$plugin->run();
 }
-run_payhere();
+payhere_run();

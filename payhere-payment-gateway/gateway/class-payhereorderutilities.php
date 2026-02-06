@@ -119,7 +119,7 @@ class PayHereOrderUtilities {
 				$discount_amount = $post['payhere_amount'] - $post['captured_amount'];
         
 				$item = new WC_Order_Item_Fee();
-				$item->set_name(__('PayHere Payment Gateway Discount', 'payhere'));
+				$item->set_name(__('PayHere Payment Gateway Discount', 'payhere-payment-gateway'));
 				$item->set_amount(-$discount_amount); 
 				$item->set_total(-$discount_amount); 
 				$this->order->add_item($item);

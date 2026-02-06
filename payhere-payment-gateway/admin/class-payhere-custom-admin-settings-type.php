@@ -100,6 +100,7 @@ class PayHereImageSelectionAdminSetting extends WC_Settings_API
          */
 
         wp_enqueue_style($this->pay_here, plugin_dir_url(__FILE__) . 'css/payhere-ipg-admin.css', array(), $this->version, 'all');
+        wp_enqueue_style($this->pay_here, plugin_dir_url(__FILE__) . 'css/payhere-customer-list-settings.css', array(), $this->version, 'all');
     }
 
 
@@ -131,29 +132,29 @@ class PayHereImageSelectionAdminSetting extends WC_Settings_API
 
         $value = $this->get_option($key);
         // if(empty($value)){
-        //     $value = "https://payherestorage.blob.core.windows.net/payhere-resources/plugins/payhere_long_banner.png"; 
+        //     $value = esc_url(plugin_dir_url(__FILE__) . 'public/images/payhere_long_banner.png'); 
         // }
         ob_start();
 ?>
         <tr valign="top">
             <th scope="row" class="titledesc">
                 <label for="<?php echo esc_attr($field_key); ?>">
-                    <?php echo wp_kses_post($data['title']); ?> <?php echo $this->get_tooltip_html($data); // WPCS: XSS ok. 
+                    <?php echo wp_kses_post($data['title']); ?> <?php echo esc_attr($this->get_tooltip_html($data)); // WPCS: XSS ok. 
                                                                 ?>
                 </label>
             </th>
             <td class="forminp forminp-<?php echo esc_attr($data['type']) ?>" id="image-selection-wrapper">
-                <input type="text" name="<?php echo esc_attr($field_key); ?>" id="<?php echo esc_attr($field_key); ?>" value="<?php echo $value ?>">
-                <img src="<?php echo !empty($value) ? $value : ''; ?>" style="display: block;width:400px">
+                <input type="text" name="<?php echo esc_attr($field_key); ?>" id="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($value) ?>">
+                <img src="<?php echo !empty(esc_url($value)) ? esc_url($value) : ''; ?>" style="display: block; width:400px">
                 <p class="controls">
                     <button class="button-primary add-media" type="button">
-                        <?php esc_html_e('Add Logo', 'text-domain'); ?>
+                        <?php esc_html_e('Add Logo', 'payhere-payment-gateway'); ?>
                     </button>
                     <button class="button-secondary remove-media" type="button">
-                        <?php esc_html_e('Remove Logo', 'text-domain'); ?>
+                        <?php esc_html_e('Remove Logo', 'payhere-payment-gateway'); ?>
                     </button>
                     <button class="button-secondary set-default" type="button">
-                        <?php esc_html_e('Set Default', 'text-domain');?>
+                        <?php esc_html_e('Set Default', 'payhere-payment-gateway');?>
                     </button>
                 </p>
             </td>
@@ -186,5 +187,8 @@ class PayHereImageSelectionAdminSetting extends WC_Settings_API
 
         wp_enqueue_media();
         wp_enqueue_script($this->pay_here . '-image-section', plugin_dir_url(__FILE__) . 'js/payhere-ipg-admin-image-selection.js', array('jquery'), $this->version, false);
+        wp_localize_script($this->pay_here . '-image-section', 'payhereData', array(
+            'ph_banner_url' => esc_url(PAYHERE_PLUGIN_URL . 'public/images/payhere_long_banner.png')
+        ));
     }
 }

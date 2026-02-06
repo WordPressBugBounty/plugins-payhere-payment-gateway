@@ -28,8 +28,8 @@ class PHCustomersList extends WP_List_Table {
 	public function __construct() {
 		parent::__construct(
 			array(
-				'singular' => __( 'Customer', 'sp' ), // singular name of the listed records.
-				'plural'   => __( 'Customers', 'sp' ), // plural name of the listed records.
+				'singular' => __( 'Customer', 'payhere-payment-gateway' ), // singular name of the listed records.
+				'plural'   => __( 'Customers', 'payhere-payment-gateway' ), // plural name of the listed records.
 				'ajax'     => false, // does this table support ajax?
 			)
 		);
@@ -48,13 +48,19 @@ class PHCustomersList extends WP_List_Table {
 		$db_p = $wpdb->prefix;
 
 		$parameters = array();
-		$post_data  = filter_input_array( INPUT_GET, FILTER_DEFAULT );
+
+		//removed postada (acessing all get parameters) v 2.3.8 beta
+
+		$_s_get_data 		= sanitize_text_field(filter_input(INPUT_GET, 's', FILTER_SANITIZE_SPECIAL_CHARS));
+		$_p_get_data 		= sanitize_text_field(filter_input(INPUT_GET, 'p', FILTER_SANITIZE_SPECIAL_CHARS));
+		$_orderby_get_data 	= sanitize_text_field(filter_input(INPUT_GET, 'orderby', FILTER_SANITIZE_SPECIAL_CHARS));
+		$_order_get_data 	= sanitize_text_field(filter_input(INPUT_GET, 'order', FILTER_SANITIZE_SPECIAL_CHARS));
 
 		$sql = "SELECT meta_key,meta_value,{$db_p}wc_customer_lookup.* FROM {$db_p}wc_customer_lookup
         LEFT JOIN {$db_p}usermeta ON {$db_p}wc_customer_lookup.user_id = {$db_p}usermeta.user_id AND {$db_p}usermeta.meta_key = 'payhere_customer_data'";
 
-		if ( isset( $post_data['s'] ) && ! empty( $post_data['s'] ) ) {
-			$search_text  = sanitize_text_field( $post_data['s'] );
+		if ( isset( $_s_get_data ) && ! empty( $_s_get_data ) ) {
+			$search_text  = sanitize_text_field( $_s_get_data );
 			$sql         .= " WHERE (first_name LIKE '%s' OR last_name LIKE '%s' )";
 			$parameters[] = '%' . $wpdb->esc_like( $search_text ) . '%';
 			$parameters[] = '%' . $wpdb->esc_like( $search_text ) . '%';
@@ -66,8 +72,8 @@ class PHCustomersList extends WP_List_Table {
 		$sql .= " LIMIT $per_page";
 		$sql .= ' OFFSET ' . ( $page_number - 1 ) * $per_page;
 
-		$parameters[] = ! empty( $post_data['orderby'] ) ? esc_sql( sanitize_text_field( $post_data['orderby'] ) ) : ( $db_p . 'usermeta.user_id' );
-		$parameters[] = ! empty( $post_data['order'] ) ? esc_sql( sanitize_text_field( $post_data['order'] ) ) : 'DESC';
+		$parameters[] = ! empty( $_orderby_get_data ) ? esc_sql( sanitize_text_field( $_orderby_get_data ) ) : ( $db_p . 'usermeta.user_id' );
+		$parameters[] = ! empty( $_order_get_data ) ? esc_sql( sanitize_text_field( $_order_get_data ) ) : 'DESC';
 
 		$cache_key = 'customer_data';
 
@@ -124,7 +130,7 @@ LEFT JOIN {$db_p}usermeta ON {$db_p}wc_customer_lookup.user_id = {$db_p}usermeta
 
 	/** Text displayed when no customer data is available */
 	public function no_items() {
-		esc_html_e( 'No customers avaliable.', 'sp' );
+		esc_html_e( 'No customers avaliable.', 'payhere-payment-gateway' );
 	}
 
 	/** Returns the view template. Currnetly no template */
@@ -225,14 +231,14 @@ LEFT JOIN {$db_p}usermeta ON {$db_p}wc_customer_lookup.user_id = {$db_p}usermeta
 	 */
 	public function get_columns() {
 		return array(
-			'user_id'         => __( 'ID', 'woo_payhere' ),
-			'first_name'      => __( 'Name', 'woo_payhere' ),
-			'username'        => __( 'Username', 'woo_payhere' ),
-			'email'           => __( 'E-mail', 'woo_payhere' ),
-			'date_registered' => __( 'Sign Up Date', 'woo_payhere' ),
-			'saved_date'      => __( 'Card Saved Date', 'woo_payhere' ),
-			'method'          => __( 'Method', 'woo_payhere' ),
-			'card_no'         => __( 'Card', 'woo_payhere' ),
+			'user_id'         => __( 'ID', 'payhere-payment-gateway' ),
+			'first_name'      => __( 'Name', 'payhere-payment-gateway' ),
+			'username'        => __( 'Username', 'payhere-payment-gateway' ),
+			'email'           => __( 'E-mail', 'payhere-payment-gateway' ),
+			'date_registered' => __( 'Sign Up Date', 'payhere-payment-gateway' ),
+			'saved_date'      => __( 'Card Saved Date', 'payhere-payment-gateway' ),
+			'method'          => __( 'Method', 'payhere-payment-gateway' ),
+			'card_no'         => __( 'Card', 'payhere-payment-gateway' ),
 		);
 	}
 

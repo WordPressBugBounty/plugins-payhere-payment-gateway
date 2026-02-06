@@ -16,6 +16,11 @@
  * @subpackage PayHere/gateway
  * @author     Dilshan Jayasanka <dilshan@payhere.lk>
  */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 class PHCustomerListOptions {
 
 
@@ -63,29 +68,6 @@ class PHCustomerListOptions {
 	public function plugin_settings_page() {        ?>
 			<div class="wrap">
 				<h2>Saved Payment Methods with PayHere </h2>
-
-				<style>
-					.disply-card {
-						background-image: url("<?php echo esc_url( plugins_url( 'admin/images/cards.png', __DIR__ ) ); ?>");
-						width: 47px;
-						height: 30px;
-						display: block;
-						background-size: cover;
-					}
-
-					.disply-card.visa-card {
-						background-position: left;
-					}
-
-					.disply-card.master-card {
-						background-position: right;
-					}
-
-					.filter-active {
-						color: #000;
-						text-decoration: underline;
-					}
-				</style>
 				<div id="poststuff">
 					<div id="post-body" class="metabox-holder">
 						<div id="post-body-content">

@@ -20,6 +20,11 @@
  * @subpackage PayHere/includes
  * @author     Dilshan Jayasanka <dilshan@payhere.lk>
  */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 class PayHere_Loader {
 
 	/**

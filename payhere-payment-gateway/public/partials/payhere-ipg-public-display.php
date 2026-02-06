@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Provide a public-facing view for the plugin
  *
@@ -10,6 +11,10 @@
  * @package    PayHere
  * @subpackage PayHere/public/partials
  */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 ?>
 

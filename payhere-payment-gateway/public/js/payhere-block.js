@@ -1,6 +1,6 @@
 const ph_settings = window.wc.wcSettings.getSetting('payhere_data', {});
 
-const ph_label = window.wp.htmlEntities.decodeEntities(ph_settings.title) || window.wp.i18n.__('PayHere', 'payhere');
+const ph_label = window.wp.htmlEntities.decodeEntities(ph_settings.title) || window.wp.i18n.__('PayHere', 'payhere-payment-gateway');
 
 const PH_Content = () => {
     return window.wp.htmlEntities.decodeEntities(ph_settings.description || '');

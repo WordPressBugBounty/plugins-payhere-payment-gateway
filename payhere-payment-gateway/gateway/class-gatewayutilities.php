@@ -35,125 +35,124 @@ class GatewayUtilities
 	{
 		return array(
 			'seperator'         => array(
-				'title'       => __('General Settings', 'payhere'),
+				'title'       => __('General Settings', 'payhere-payment-gateway'),
 				'description' => '',
 				'type'        => 'title',
 			),
 			// Activate the Gateway.
 			'enabled'           => array(
-				'title'       => __('Enable/Disable', 'payhere'),
+				'title'       => __('Enable/Disable', 'payhere-payment-gateway'),
 				'type'        => 'checkbox',
-				'label'       => __('Enable PayHere', 'payhere'),
+				'label'       => __('Enable PayHere', 'payhere-payment-gateway'),
 				'default'     => 'yes',
 				'description' => 'Show in the Payment List as a payment option',
 				'desc_tip'    => true,
 			),
 			// Title as displayed on Frontend.
 			'title'             => array(
-				'title'       => __('Title', 'payhere'),
+				'title'       => __('Title', 'payhere-payment-gateway'),
 				'type'        => 'text',
-				'default'     => __('PayHere', 'payhere'),
-				'description' => __('This controls the title which the user sees during checkout.', 'payhere'),
+				'default'     => __('PayHere', 'payhere-payment-gateway'),
+				'description' => __('This controls the title which the user sees during checkout.', 'payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			// Description as displayed on Frontend.
 			'description'       => array(
-				'title'       => __('Description:', 'payhere'),
+				'title'       => __('Description:', 'payhere-payment-gateway'),
 				'type'        => 'textarea',
-				'default'     => __('Pay by Visa, MasterCard, AMEX, eZcash, mCash or Internet Banking via PayHere.', 'payhere'),
-				'description' => __('This controls the description which the user sees during checkout.', 'payhere'),
+				'default'     => __('Pay by Visa, MasterCard, AMEX, eZcash, mCash or Internet Banking via PayHere.', 'payhere-payment-gateway'),
+				'description' => __('This controls the description which the user sees during checkout.', 'payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			// LIVE Key-ID.
 			'merchant_id'        => array(
-				'title'       => __('Merchant ID', 'payhere'),
+				'title'       => __('Merchant ID', 'payhere-payment-gateway'),
 				'type'        => 'text',
-				'description' => __('Your PayHere Merchant ID'),
+				'description' => __('Your PayHere Merchant ID','payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			// LIVE Key-Secret.
 			'secret'            => array(
-				'title'       => __('Secret Key', 'payhere'),
+				'title'       => __('Secret Key', 'payhere-payment-gateway'),
 				'type'        => 'text',
-				'description' => __('Secret word you set in your PayHere Account'),
+				'description' => __('Secret word you set in your PayHere Account', 'payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			// Mode of Transaction.
 			'test_mode'         => array(
-				'title'       => __('Sandbox Mode', 'payhere'),
+				'title'       => __('Sandbox Mode', 'payhere-payment-gateway'),
 				'type'        => 'checkbox',
-				'label'       => __('Enable Sandbox Mode', 'payhere'),
+				'label'       => __('Enable Sandbox Mode', 'payhere-payment-gateway'),
 				'default'     => 'yes',
-				'description' => __('PayHere sandbox can be used to test payments', 'payhere'),
+				'description' => __('PayHere sandbox can be used to test payments', 'payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			// Onsite checkout.
 			'onsite_checkout'   => array(
-				'title'       => __('Onsite Checkout', 'payhere'),
+				'title'       => __('Onsite Checkout', 'payhere-payment-gateway'),
 				'type'        => 'checkbox',
-				'label'       => __('Enable On-site Checkout', 'payhere'),
+				'label'       => __('Enable On-site Checkout', 'payhere-payment-gateway'),
 				'default'     => 'no',
-				'description' => __('Enable to let customers checkout with PayHere without leaving your site', 'payhere'),
+				'description' => __('Enable to let customers checkout with PayHere without leaving your site', 'payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			// Banner Image.
 			'banner_image'   => array(
-				'title'       => __('Gateway Image', 'payhere'),
+				'title'       => __('Gateway Image', 'payhere-payment-gateway'),
 				'type'        => 'image_selection',
-				'label'       => __('Upload Gateway Image', 'payhere'),
-				'default'     => 'https://payherestorage.blob.core.windows.net/payhere-resources/plugins/payhere_long_banner.png',
-				'description' => __('Enable to let customers checkout with PayHere without leaving your site', 'payhere'),
+				'label'       => __('Upload Gateway Image', 'payhere-payment-gateway'),
+				'default'     => esc_url(PAYHERE_PLUGIN_URL . 'public/images/payhere_long_banner.png'),
 				'desc_tip'    => true,
 			),
 			// Page for Redirecting after Transaction.
 			'redirect_page'      => array(
-				'title'       => __('Return Page'),
+				'title'       => __('Return Page', 'payhere-payment-gateway'),
 				'type'        => 'select',
 				'options'     => $this->payhere_get_pages('Select Page'),
-				'description' => __('Page to redirect the customer after payment', 'payhere'),
+				'description' => __('Page to redirect the customer after payment', 'payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			'payment_action'    => array(
-				'title'       => __('Payment Action', 'payhere'),
+				'title'       => __('Payment Action', 'payhere-payment-gateway'),
 				'type'        => 'select',
 				'class'       => 'wc-enhanced-select',
-				'description' => __('Choose whether you wish to capture funds immediately or authorize payment and capture later.<br/><br/>To setup Authorize mode with your PayHere Live Account, contact PayHere Support on <a href="tel:+94115339339">+94 115 339 339</a> on email <a href="mailto:support@payhere.lk">support@payhere.lk</a>. Our team will be of assistance.', 'payhere'),
+				'description' => __('Choose whether you wish to capture funds immediately or authorize payment and capture later.<br/><br/>To setup Authorize mode with your PayHere Live Account, contact PayHere Support on <a href="tel:+94115339339">+94 115 339 339</a> on email <a href="mailto:support@payhere.lk">support@payhere.lk</a>. Our team will be of assistance.', 'payhere-payment-gateway'),
 				'default'     => 'sale',
 				'desc_tip'    => false,
 				'options'     => array(
-					'sale'          => __('Sale', 'payhere'),
-					'authorization' => __('Authorize', 'payhere'),
+					'sale'          => __('Sale', 'payhere-payment-gateway'),
+					'authorization' => __('Authorize', 'payhere-payment-gateway'),
 				),
 			),
 			'seperator_2'       => array(
-				'title'       => __('Recurring Payments', 'payhere'),
-				'description' => __('You will only need below credentials if you have subscriptions or Charging API available.', 'payhere'),
+				'title'       => __('Recurring Payments', 'payhere-payment-gateway'),
+				'description' => __('You will only need below credentials if you have subscriptions or Charging API available.', 'payhere-payment-gateway'),
 				'type'        => 'title',
 			),
 			// Business App ID.
 			'enable_tokenizer'  => array(
-				'title'       => __('Enable Tokenizer', 'payhere'),
+				'title'       => __('Enable Tokenizer', 'payhere-payment-gateway'),
 				'type'        => 'checkbox',
-				'description' => __('If Enabled, Customers can pay with their saved cards. <a target="_blank" href="https://support.payhere.lk/api-&-mobile-sdk/payhere-charging">More Info</a>'),
+				'description' => __('If Enabled, Customers can pay with their saved cards.','payhere-payment-gateway'),
 				'desc_tip'    => false,
 			), // Business App ID.
 			'app_id'            => array(
-				'title'       => __('App ID', 'payhere'),
+				'title'       => __('App ID', 'payhere-payment-gateway'),
 				'type'        => 'text',
-				'description' => __('Your PayHere Business App ID <a target="_blank" href="https://support.payhere.lk/api-&-mobile-sdk/payhere-subscription#1-create-a-business-app">More Info</a>'),
+				'description' => __('Your PayHere Business App ID','payhere-payment-gateway'),
 				'desc_tip'    => false,
 			), // Business App Secret.
 			'app_secret'        => array(
-				'title'       => __('App Secret', 'payhere'),
+				'title'       => __('App Secret', 'payhere-payment-gateway'),
 				'type'        => 'text',
-				'description' => __('Your PayHere Business App Secret'),
+				'description' => __('Your PayHere Business App Secret.','payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 			'subscription_warn' => array(
-				'title'       => 'ⓘ Important!!',
+				'title'       => __('ⓘ Important!!','payhere-payment-gateway'),
 				'type'        => 'info_box',
 				'box_type'    => 'info',
-				'description' => "PayHere doesn't support Renewals,Switching and Synchronisation for Subscriptions.Please do not enable above features in Woocommerce Subscription Plugin settings if the plugin installed and active.",
+				'description' => __("PayHere doesn't support Renewals,Switching and Synchronisation for Subscriptions.Please do not enable above features in Woocommerce Subscription Plugin settings if the plugin installed and active.",'payhere-payment-gateway'),
 				'desc_tip'    => true,
 			),
 		);
@@ -291,12 +290,12 @@ class GatewayUtilities
 	{
 		$verified = true;
 
-		$order_id         = sanitize_text_field(filter_input(INPUT_POST, 'order_id')); //changed from [payhere_amount] to [order_id] from version 2.3.7
-		$merchant_id      = sanitize_text_field(filter_input(INPUT_POST, 'merchant_id'));
-		$payhere_amount   = sanitize_text_field(filter_input(INPUT_POST, 'payhere_amount'));
-		$md5sig           = sanitize_text_field(filter_input(INPUT_POST, 'md5sig'));
-		$payhere_currency = sanitize_text_field(filter_input(INPUT_POST, 'payhere_currency'));
-		$status_code      = sanitize_text_field(filter_input(INPUT_POST, 'status_code'));
+		$order_id         = sanitize_text_field(filter_input(INPUT_POST, 'order_id', FILTER_SANITIZE_SPECIAL_CHARS)); //changed from [payhere_amount] to [order_id] from version 2.3.7
+		$merchant_id      = sanitize_text_field(filter_input(INPUT_POST, 'merchant_id', FILTER_SANITIZE_SPECIAL_CHARS));
+		$payhere_amount   = sanitize_text_field(filter_input(INPUT_POST, 'payhere_amount', FILTER_SANITIZE_SPECIAL_CHARS));
+		$md5sig           = sanitize_text_field(filter_input(INPUT_POST, 'md5sig', FILTER_SANITIZE_SPECIAL_CHARS));
+		$payhere_currency = sanitize_text_field(filter_input(INPUT_POST, 'payhere_currency', FILTER_SANITIZE_SPECIAL_CHARS));
+		$status_code      = sanitize_text_field(filter_input(INPUT_POST, 'status_code', FILTER_SANITIZE_SPECIAL_CHARS));
 
 		$verification_required = apply_filters('payhere_filter_verification_required', true, $order_id, $merchant_id);
 		if ($verification_required) {

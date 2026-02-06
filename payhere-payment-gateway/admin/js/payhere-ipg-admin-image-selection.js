@@ -60,8 +60,8 @@
 	});
 
 	default_btn.on('click', function () {
-        image.attr('src', 'https://payherestorage.blob.core.windows.net/payhere-resources/plugins/payhere_long_banner.png');
-        input.val('https://payherestorage.blob.core.windows.net/payhere-resources/plugins/payhere_long_banner.png');
+        image.attr('src', payhereData.ph_banner_url);
+        input.val(payhereData.ph_banner_url);
     });
 
 })(jQuery);

@@ -26,6 +26,11 @@
  * @subpackage PayHere/includes
  * @author     Your Name <dilshan@payhere.lk>
  */
+
+if (!defined('ABSPATH')) {
+	exit;
+}
+
 class PayHere
 {
 	/**
@@ -76,8 +81,6 @@ class PayHere
 
 		$this->check_dependencies();
 		$this->load_dependencies();
-
-		$this->set_locale();
 		$this->define_gateway_hooks();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
@@ -90,29 +93,42 @@ class PayHere
 	 */
 	public function check_dependencies()
 	{
+		// Load plugin functions if not available
+		if (! function_exists('is_plugin_active')) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
 
-		// Added avoid multisite check for woocommerce   - for version 2.0.0.
-		if (!is_multisite() && !in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')), true)) {
+		// WooCommerce dependency check (non-multisite)
+		if (! is_multisite() && ! is_plugin_active('woocommerce/woocommerce.php')) {
 			add_action(
 				'admin_notices',
 				function () {
 					$class   = 'notice notice-error is-dismissible';
-					$message = 'PayHere Payment Gateway for Woocommerce is enabled but not effective. It requires WooCommerce in order to work.';
-					printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), esc_html($message));
+					$message = 'PayHere Payment Gateway for WooCommerce is enabled but not effective. It requires WooCommerce in order to work.';
+					printf(
+						'<div class="%1$s"><p>%2$s</p></div>',
+						esc_attr($class),
+						esc_html($message)
+					);
 				}
 			);
 			return;
 		}
+
+		// WooCommerce Subscriptions compatibility
 		if (class_exists('WC_Subscriptions')) {
-			if (version_compare('3.0', WC_Subscriptions::$wc_minimum_supported_version, '<')) {
-				add_action('admin_notices', 'WC_Subscriptions::woocommerce_inactive_notice');
+			if (version_compare(WC_Subscriptions::$wc_minimum_supported_version, '3.0', '<')) {
+				add_action('admin_notices', ['WC_Subscriptions', 'woocommerce_inactive_notice']);
 				return;
 			}
 		}
-		if (!class_exists('WC_Payment_Gateway')) {
+
+		// Core WC gateway class check
+		if (! class_exists('WC_Payment_Gateway')) {
 			return;
 		}
 	}
+
 
 
 	/**
@@ -141,12 +157,6 @@ class PayHere
 		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-payhere-loader.php';
 
 		/**
-		 * The class responsible for defining internationalization functionality
-		 * of the plugin.
-		 */
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-payhere-i18n.php';
-
-		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-payhereadmin.php';
@@ -166,22 +176,7 @@ class PayHere
 		$this->loader = new PayHere_Loader();
 	}
 
-	/**
-	 * Define the locale for this plugin for internationalization.
-	 *
-	 * Uses the PayHere_i18n class in order to set the domain and to register the hook
-	 * with WordPress.
-	 *
-	 * @since    2.0.0
-	 * @access   private
-	 */
-	private function set_locale()
-	{
 
-		$plugin_i18n = new PayHere_i18n();
-
-		$this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
-	}
 
 	/**
 	 * Register all of the hooks related to the admin area functionality
@@ -194,7 +189,7 @@ class PayHere
 	{
 
 		$plugin_admin = new PayHereAdmin($this->get_payhere(), $this->get_version());
-	
+
 
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
@@ -202,7 +197,6 @@ class PayHere
 		$this->loader->add_filter('plugin_action_links', $plugin_admin, 'add_action_links', 10, 2);
 
 		$this->loader->add_action('plugins_loaded', $plugin_admin, 'add_customer_list_menu', 10);
-
 	}
 
 	/**
@@ -255,7 +249,6 @@ class PayHere
 
 		$this->loader->add_filter('wcs_view_subscription_actions', $subscription, 'restrict_user_actions', 10, 2);
 		$this->loader->add_filter('user_has_cap', $subscription, 'payhere_user_has_capability', 10, 3);
-
 	}
 
 	/**
