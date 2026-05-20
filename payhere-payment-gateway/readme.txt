@@ -3,9 +3,9 @@ Contributors: payhere
 Donate link: https://www.payhere.lk
 Tags: payhere, online, payments, sri lanka
 Requires at least: 6.4
-Tested up to: 6.9
-WC tested up to: 10.4.3
-Stable tag: 2.4.4
+Tested up to: 6.9.4
+WC tested up to: 10.7.0
+Stable tag: 2.4.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -189,6 +189,9 @@ Bug fixes.
 
 = 2.4.4 =
 Fixed an issue on the WooCommerce order page.
+
+= 2.4.5 =
+Bug fixes & improvements.
 
 == Upgrade Notice ==
 

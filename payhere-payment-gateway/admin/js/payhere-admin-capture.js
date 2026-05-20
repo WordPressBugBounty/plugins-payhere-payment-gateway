@@ -25,7 +25,7 @@
 					{
 						action: 'payhere_capture',
 						order_id: payhere_capture_data.order_id,
-						authorize_amount: payhere_capture_data.authorize_amount,
+						authorize_amount: capture_amount,
 					},
 					function (data) {
 						enable_button( ele );

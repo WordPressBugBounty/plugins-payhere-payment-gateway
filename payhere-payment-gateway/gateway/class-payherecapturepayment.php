@@ -97,7 +97,7 @@ class PayHereCapturePayment extends PayHereToken {
 				if ( '2' === strval($capture_response->data->status_code )) {
 					$order->set_status( 'processing' );
 					$order->payment_complete( sanitize_text_field( $capture_response->data->payment_id ) );
-					$order->add_meta_data( 'payhere_acpture_date', gmdate( "g:ia \o\n l jS F Y" ) );
+					$order->add_meta_data( 'payhere_acpture_date', gmdate( "g:ia \n l jS F Y" ) );
 					$order->add_meta_data( 'payhere_acpture_amount', sanitize_text_field( $capture_response->data->captured_amount ) );
 					$order->add_order_note( sanitize_text_field( $capture_response->msg ) );
 					$order->add_order_note( sanitize_text_field( $capture_response->data->status_message ) );

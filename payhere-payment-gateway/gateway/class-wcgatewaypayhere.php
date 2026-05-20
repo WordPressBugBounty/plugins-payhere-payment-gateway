@@ -218,7 +218,8 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 			add_action('woocommerce_thankyou', array(&$this, 'remove_order_from_thankyou'), 10, 1);
 		}
 
-		add_filter('the_title', array(&$this, 'order_received_title'), 10, 2);
+		add_filter('the_title', array(&$this, 'order_received_title_fallback'), 10, 2);
+		add_filter('woocommerce_thankyou_order_received_title', array(&$this, 'order_received_title'), 10, 2);
 
 		add_filter('woocommerce_thankyou_order_received_text', array($this, 'change_woo_order_received_text'), 10, 2);
 	}
@@ -698,6 +699,58 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 	 */
 	public function order_received_title($title, $id)
 	{
+		if (! is_order_received_page()) {
+			return $title;
+		}
+
+		global $wp;
+
+		// No nonce is available on thank you page URL.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$key = isset($_GET['key']) ? wc_clean(wp_unslash($_GET['key'])) : '';
+
+		$order_id = isset($wp->query_vars['order-received'])
+			? absint($wp->query_vars['order-received'])
+			: 0;
+
+		$order_id  = apply_filters('payhere_woocommerce_thankyou_order_id', $order_id);
+		$order_key = apply_filters('payhere_woocommerce_thankyou_order_key', $key);
+
+		if ($order_id <= 0 || empty($order_key)) {
+			return $title;
+		}
+
+		$order = wc_get_order($order_id);
+
+		if (! $order instanceof WC_Order) {
+			return $title;
+		}
+
+		if ($order->get_order_key() !== $order_key) {
+			return $title;
+		}
+
+		if ($order->get_payment_method() !== $this->id) {
+			return $title;
+		}
+
+		if (in_array($order->get_status(), array('completed', 'on-hold', 'processing', 'phauthorized'), true)) {
+			return __('Order received', 'payhere-payment-gateway');
+		}
+
+		return __('Payment pending', 'payhere-payment-gateway');
+	}
+
+	/**
+	 * Modify the title of Order received page to replce allways showed "Order Received" title fallback.
+	 *
+	 * @param array $title Current title.
+	 * @param int   $id WC Order id.
+	 * @return Array retuns the apprpriate title for the order status.
+	 */
+
+	public function order_received_title_fallback($title, $id)
+	{
 		if (is_order_received_page() && get_the_ID() === $id) {
 			global $wp;
 
@@ -715,7 +768,7 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 				}
 			}
 
-			if (isset($order) && $order->get_payment_method() === $this->id) {
+			if ($order instanceof WC_Order && $order->get_payment_method() === $this->id) {
 				if ('completed' === $order->get_status() || 'on-hold' === $order->get_status() || 'processing' === $order->get_status()) {
 					$title = 'Order received';
 				} else {
@@ -733,31 +786,54 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 	 */
 	public function remove_order_from_thankyou($order_id)
 	{
-		$order = wc_get_order(wc_sanitize_order_id(wp_unslash($order_id))); //Replaced [new WC_Order] with [wc_get_order] from version 2.3.7
-		if ($order->get_payment_method() === $this->id) {
+		$order = wc_get_order(wc_sanitize_order_id(wp_unslash($order_id)));
 
-			// ob_clean(); //removed from version 2.3.7 to display the order details in the receipt
+		if (!$order instanceof WC_Order) {
+			return;
+		}
 
-			$message = $order->get_meta('payhere_gateway_message', true);
+		if ($order->get_payment_method() !== $this->id) {
+			return;
+		}
 
-			// added status [phauthorized] to the logic from version 2.3.7
-			if ($order && 'completed' !== $order->get_status() || 'on-hold' !== $order->get_status() || 'phauthorized' !== $order->get_status()) {
+		$status  = $order->get_status();
+		$message = $order->get_meta('payhere_gateway_message', true);
+
+		// SUCCESS ORDER
+		if (in_array($status, array('completed', 'processing', 'on-hold', 'phauthorized'), true)) {
 ?>
-				<p style="margin : 10px 0"><?php echo esc_html($message ? $message : 'Payment not complete. Please try again.'); ?></p>
-				<div>
-					<?php
-					if ($order->needs_payment()) {
-						printf(
-							'<a class="ph-btn blue" href="%s">%s</a>',
-							esc_url($order->get_checkout_payment_url()),
-							esc_html(__('Try Again', 'payhere-payment-gateway'))
-						);
-					}
-					?>
-					<a href="<?php echo esc_url(site_url()); ?>" class="ph-btn gray">Return to shop</a>
-				</div>
+			<div>
+				<a href="<?php echo esc_url(site_url()); ?>" class="ph-btn gray">
+					<?php echo esc_html__('Return to shop', 'payhere-payment-gateway-beta'); ?>
+				</a>
+			</div>
+		<?php
+			return;
+		}
+
+		// FAILED / UNPAID ORDER
+		if (in_array($status, array('failed', 'pending', 'cancelled'), true)) {
+		?>
+			<p style="margin:10px 0">
+				<?php echo esc_html($message ? $message : 'Payment not complete. Please try again.'); ?>
+			</p>
+
+			<div>
+				<?php
+				if ($order->needs_payment()) {
+					printf(
+						'<a class="ph-btn blue" href="%s">%s</a>',
+						esc_url($order->get_checkout_payment_url()),
+						esc_html__('Try Again', 'payhere-payment-gateway-beta')
+					);
+				}
+				?>
+
+				<a href="<?php echo esc_url(site_url()); ?>" class="ph-btn gray">
+					<?php echo esc_html__('Return to shop', 'payhere-payment-gateway-beta'); ?>
+				</a>
+			</div>
 <?php
-			}
 		}
 	}
 
@@ -1013,38 +1089,70 @@ class WCGatewayPayHere extends WC_Payment_Gateway
 	 */
 	public function capture_payment()
 	{
-		$json     = array();
-		$order_id = sanitize_text_field(filter_input(INPUT_POST, 'order_id', FILTER_SANITIZE_SPECIAL_CHARS));
-		$order	  = wc_get_order($order_id);
+		$json = array();
 
-		if (!empty($order_id)) {
-			$order_id     = wc_sanitize_order_id($order_id);
-			$is_test_mode = $this->settings['test_mode'];
+		$order_id = wc_sanitize_order_id(
+			filter_input(INPUT_POST, 'order_id', FILTER_SANITIZE_SPECIAL_CHARS)
+		);
 
-			$effective_merchant_id = apply_filters('payhere_filter_merchant_id', $this->merchant_id);
-			$effective_test_mode   = apply_filters('payhere_filter_test_mode', $is_test_mode, $effective_merchant_id);
-			$effective_app_id      = apply_filters('payhere_filter_app_id', $this->app_id, $effective_merchant_id);
-			$effective_app_secret  = apply_filters('payhere_filter_app_secret', $this->app_secret, $effective_merchant_id);
+		$payhere_authorize_amount = (float) filter_input(
+			INPUT_POST,
+			'authorize_amount',
+			FILTER_SANITIZE_NUMBER_FLOAT,
+			FILTER_FLAG_ALLOW_FRACTION
+		);
 
-			//updated to get_meta from get_meta_data from version 2.3.7
-			$payhere_authorize_token  = $order->get_meta('payhere_auth_token', true) ? $order->get_meta('payhere_auth_token', true) : '';
-			$payhere_authorize_amount = $order->get_meta('payhere_auth_amount', true) ? $order->get_meta('payhere_auth_amount', true) : '';
-
-			$capture = new PayHereCapturePayment($effective_app_id, $effective_app_secret, $effective_test_mode);
-			$order   = wc_get_order($order_id); //Replaced [new WC_Order] with [wc_get_order] from version 2.3.7
-			$json    = $capture->capture_payment_payhere($order, $payhere_authorize_token, $payhere_authorize_amount);
-
-			$this->gateway_utilities->payhere_log('CHARGE', $json);
-
-			echo wp_json_encode($json);
-		} else {
+		if (empty($order_id)) {
 			echo wp_json_encode(
 				array(
 					'type'    => 'ERR',
 					'message' => 'Can\'t make the payment. Server Error.',
 				)
 			);
+			exit();
 		}
+
+		$order = wc_get_order($order_id);
+
+		if (!$order instanceof WC_Order) {
+			echo wp_json_encode(
+				array(
+					'type'    => 'ERR',
+					'message' => 'Invalid order.',
+				)
+			);
+			exit();
+		}
+
+		$is_test_mode = $this->settings['test_mode'];
+
+		$effective_merchant_id = apply_filters('payhere_filter_merchant_id', $this->merchant_id);
+		$effective_test_mode   = apply_filters('payhere_filter_test_mode', $is_test_mode, $effective_merchant_id);
+		$effective_app_id      = apply_filters('payhere_filter_app_id', $this->app_id, $effective_merchant_id);
+		$effective_app_secret  = apply_filters('payhere_filter_app_secret', $this->app_secret, $effective_merchant_id);
+
+		$payhere_authorize_token = $order->get_meta('payhere_auth_token', true);
+
+		if ($payhere_authorize_amount <= 0) {
+			$payhere_authorize_amount = (float) $order->get_meta('payhere_auth_amount', true);
+		}
+
+		$capture = new PayHereCapturePayment(
+			$effective_app_id,
+			$effective_app_secret,
+			$effective_test_mode
+		);
+
+		$json = $capture->capture_payment_payhere(
+			$order,
+			$payhere_authorize_token,
+			$payhere_authorize_amount
+		);
+
+		$this->gateway_utilities->payhere_log('CHARGE', $json);
+
+		echo wp_json_encode($json);
+
 		exit();
 	}
 
